@@ -1,0 +1,41 @@
+{
+  "name": "optional-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "ai-gallery.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npx nodemon ai-gallery.js",
+    "kill": "pkill -f ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BrandonCorey/optional_project.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/BrandonCorey/optional_project/issues"
+  },
+  "homepage": "https://github.com/BrandonCorey/optional_project#readme",
+  "dependencies": {
+    "bcrypt": "^5.1.0",
+    "connect-loki": "^1.2.0",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "express-flash": "^0.0.2",
+    "express-session": "^1.17.3",
+    "express-validator": "^6.15.0",
+    "morgan": "^1.10.0",
+    "openai": "^3.2.1",
+    "pg": "^8.10.0",
+    "pug": "^3.0.2"
+  },
+  "devDependencies": {
+    "babel-eslint": "^10.1.0",
+    "eslint": "^7.12.1",
+    "eslint-cli": "^1.1.1",
+    "nodemon": "^2.0.21"
+  }
+}

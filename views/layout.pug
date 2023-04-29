@@ -1,0 +1,30 @@
+html(lang='en-US')
+  head
+    title Generate Art!
+    meta(charset='UTF-8')
+    link(rel='stylesheet' href='/stylesheets/application.css')
+    link(rel='icon' type='image/png' href='/images/favicon.ico')
+  body
+    header
+      a(href='/generate')
+        h1#title AI-Gallery
+      img#robot-icon(src='/images/robot-logo.png' alt='a robot')
+      if signedIn
+        button#sidebar-button ☰
+    main
+      ul
+        - let messageTypes = Object.keys(flash || {})
+        each messageType in messageTypes
+          each message in flash[messageType]
+            li.flash(class=messageType)= message
+      nav#sidebar-container
+        ul
+          a(href='/generate')
+            li Home
+          a(href='/albums')
+            li#create View Albums
+          form(action='/sign_out' method='post')
+            button(type='submit') Sign Out ➟
+      block main
+
+  script(src='/javascripts/application.js')

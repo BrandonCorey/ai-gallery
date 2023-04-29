@@ -1,0 +1,18 @@
+extends layout
+
+block main
+  h2 Create a new photo album.
+
+  form.forms(action='/new_album' method='post')
+    dl
+      dt
+        label(for='albumName') Enter the name of the album:
+      dd
+        input.search(type='text'
+              id='albumName'
+              name='albumName'
+              placeholder='e.g kangaroo photos'
+              value=albumName)
+
+    fieldset.actions
+      input.buttons.generate(type='submit' value='+ album')

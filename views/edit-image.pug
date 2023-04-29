@@ -1,0 +1,26 @@
+extends layout
+
+block main
+  section.album-list-container
+    dl.album-list
+      dt#album-edit.album-list-items
+        a(href=`/albums/${albumId}`) ↩ Back to album
+  form.forms(action=`/albums/${albumId}/images/${image.id}/update` method='post')
+    dl
+      dt
+        label(for='prompt') Update the caption of your image:
+      dd
+        input.search(type='text'
+              id='newName'
+              name='newName'
+              placeholder='e.g sleepy kangaroo')
+
+    fieldset.actions
+      input.buttons.generate(type='submit' value='Update')
+
+
+  section.album-list-container
+    dl.album-list
+      figure
+        img(src=image.url alt=image.prompt)
+      figcaption=image.prompt

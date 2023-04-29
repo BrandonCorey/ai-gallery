@@ -1,0 +1,25 @@
+extends layout
+
+
+block main
+  section.album-list-container
+    dl.album-list
+      dt#album-edit.album-list-items
+        a(href=`/albums/${albumId}`) ↩ Back to album
+        form(action=`/albums/${albumId}/delete` method='post')
+          button.delete 🗑️ Delete Album
+
+
+  form.forms(action=`/albums/${albumId}/update` method='post')
+    dl
+      dt
+        label(for='newName') Update the name of your album:
+      dd
+        input.search(type='text'
+              id='newName'
+              name='newName'
+              placeholder='e.g kangaroo photos'
+              value=newName)
+
+    fieldset.actions
+      input.buttons.generate(type='submit' value='Update')

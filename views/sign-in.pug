@@ -1,0 +1,26 @@
+extends layout
+
+block main
+  h2 Sign in to your account.
+
+  form.forms(action='/sign_in' method='post')
+    dl
+      dt
+        label(for='username') Enter your username:
+      dd
+        input.search(type='text'
+              id='username'
+              name='username'
+              placeholder='username'
+              value=username)
+      dt
+        label(for='password') Enter your password:
+            dd
+        input.search(type='text'
+              id='password'
+              name='password'
+              placeholder='password'
+              value=password)     
+
+    fieldset.actions
+      input.buttons.generate(type='submit' value='Sign in')
