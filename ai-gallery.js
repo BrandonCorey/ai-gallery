@@ -163,6 +163,8 @@ app.get('/albums/:albumId',
     let store = res.locals.store;
     let { page } = req.query;
     let { albumId } = req.params;
+
+    if (Number.isNaN(+albumId)) throwError(ERROR_MSG.bad_request, 400);
     
     let pageCount = await store.countImagePages(+albumId);
     if (!pageCount) throwError(ERROR_MSG.not_found, 404);
