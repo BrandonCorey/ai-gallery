@@ -1,0 +1,5 @@
+{
+  "not_found": "Page not found.",
+  "server_error": "Internal server error.",
+  "bad_request": "Bad request."
+}

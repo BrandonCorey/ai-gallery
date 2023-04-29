@@ -11,6 +11,7 @@ const { body, query, validationResult } = require('express-validator');
 
 const catchError = require('./lib/catch-error');
 const PgPersistence = require('./lib/pg-persistence');
+const ERROR_MSG = require('./errors.json');
 
 const app = express();
 const HOST = process.env.HOST;
@@ -90,6 +91,12 @@ const generateImageUrl = async (req, res) => {
   return response.data.data[0].url;
 };
 
+const throwError = (message, code) => {
+  let error = new Error(message);
+  error.statusCode = code;
+  throw error;
+}
+
 app.get('/sign_in', (req, res) => {
   res.render('sign-in');
 });
@@ -116,7 +123,7 @@ app.get('/albums',
   catchError(async (req, res) => {
 
     let errors = validationResult(req);
-    if (!errors.isEmpty()) throw new Error('Page not found.');
+    if (!errors.isEmpty()) throwError(ERROR_MSG.not_found, 404);
 
     let store = res.locals.store;
     let { page } = req.query;
@@ -124,7 +131,7 @@ app.get('/albums',
     let pageCount = await store.countAlbumPages();
 
     page = Number(page) || 1;
-    if (page > pageCount) throw new Error('Page not found.');
+    if (page > pageCount) throwError(ERROR_MSG.not_found, 404);
 
     let albums = await store.sortedAlbums(page);
 
@@ -150,7 +157,7 @@ app.get('/albums/:albumId',
   ],
   catchError(async (req, res) => {
     let errors = validationResult(req);
-    if (!errors.isEmpty()) throw new Error('Page not found.');
+    if (!errors.isEmpty()) throwError(ERROR_MSG.not_found, 404);
 
 
     let store = res.locals.store;
@@ -158,18 +165,18 @@ app.get('/albums/:albumId',
     let { albumId } = req.params;
     
     let pageCount = await store.countImagePages(+albumId);
-    if (!pageCount) throw new Error('Not found.')
+    if (!pageCount) throwError(ERROR_MSG.not_found, 404);
 
     // If no page is specified, send to page 1
     page = Number(page) || 1;
 
-    if (page > pageCount) throw new Error('Page not found.');
+    if (page > pageCount) throwError(ERROR_MSG.not_found, 404);
 
     let resultAlbum = store.loadAlbum(+albumId);
     let resultImages = store.sortedImages(+albumId, page);
     let resultBoth = await Promise.all([resultAlbum, resultImages]);
 
-    if (!resultBoth[0]) throw new Error('Page not found.');
+    if (!resultBoth[0]) throwError(ERROR_MSG.not_found, 404);
 
     res.render('gallery', {
       album: resultBoth[0],
@@ -186,7 +193,7 @@ app.get('/albums/:albumId/edit',
     let { albumId } = req.params;
     let album = await store.loadAlbum(+albumId);
 
-    if (!album) throw new Error('Page not found.');
+    if (!album) throwError(ERROR_MSG.not_found, 404);
 
     res.render('edit-album', { albumId });
   })
@@ -202,7 +209,7 @@ app.get('/albums/:albumId/images/:imageId/edit',
 
     let resultBoth = await Promise.all([resultAlbum, resultImages]);
 
-    if (!resultBoth[0] || !resultBoth[1]) throw new Error('Page not found.');
+    if (!resultBoth[0] || !resultBoth[1]) throwError(ERROR_MSG.not_found, 404);
 
     res.render('edit-image', {
       albumId,
@@ -247,8 +254,8 @@ app.post('/sign_out', (req, res) => {
 app.post('/generate',
   [
     body('imagePrompt')
-      .trim()
       .blacklist(`&<>/{}().'";`)
+      .trim()
       .isLength({ min: 1 })
       .withMessage('A prompt is rquired to generate an image.')
       .bail()
@@ -270,11 +277,8 @@ app.post('/generate',
     } else {
       let imageUrl = await generateImageUrl(req, res);
 
-      if (!imageUrl) {
-        let error = new Error('Bad request.');
-        error.statusCode = 400;
-        throw error;
-      } else {
+      if (!imageUrl) throwError(ERROR_MSG.bad_request, 400)
+      else {
         let image = { imagePrompt, imageUrl };
 
         cacheImage(req, res, image);
@@ -293,8 +297,8 @@ app.post('/generate',
 app.post('/new_album',
   [
     body('albumName')
-      .trim()
       .blacklist(`&<>/{}().'"`)
+      .trim()
       .isLength({ min: 1 })
       .withMessage('Album name is required.')
       .bail()
@@ -335,8 +339,8 @@ app.post('/new_album',
 app.post('/albums/:albumId/update',
   [
     body('newName')
-      .trim()
       .blacklist(`&<>/{}().'"`)
+      .trim()
       .isLength({ min: 1 })
       .withMessage('Album name is required.')
       .bail()
@@ -353,7 +357,8 @@ app.post('/albums/:albumId/update',
     const reRenderPage = () =>  {
       res.render('edit-album', {
         flash: req.flash(),
-        newName
+        newName,
+        albumId
       });
     };
 
@@ -379,8 +384,8 @@ app.post('/albums/:albumId/update',
 app.post('/albums/:albumId/images/:imageId/update',
   [
     body('newName')
-      .trim()
       .blacklist(`&<>/{}().'"`)
+      .trim()
       .isLength({ min: 1 })
       .withMessage('Image caption is required.')
       .bail()
@@ -400,7 +405,8 @@ app.post('/albums/:albumId/images/:imageId/update',
       errors.array().forEach(error => req.flash('error', error.msg));
 
       res.render('edit-image', {
-        albumId, image,
+        albumId,
+        image,
         flash: req.flash(),
         newName,
       });
@@ -408,7 +414,7 @@ app.post('/albums/:albumId/images/:imageId/update',
     } else {
       let updated = await store.setImageCaption(+albumId, +imageId, newName);
 
-      if (!updated) throw new Error('Page not found.');
+      if (!updated) throwError(ERROR_MSG.not_found, 404);
       req.flash('success', `Image name changed to "${newName}"!`);
       res.redirect(`/albums/${albumId}`);
     }
@@ -424,7 +430,7 @@ app.post('/albums/:albumId/delete',
     let resultDeleted = store.deleteAlbum(+albumId);
     let resultBoth = await Promise.all([resultAlbum, resultDeleted]);
 
-    if (!resultBoth[0] || !resultBoth[1]) throw new Error('Page not found.');
+    if (!resultBoth[0] || !resultBoth[1]) throwError(ERROR_MSG.not_found, 404);
     req.flash('success', `"${resultBoth[0].name}" was successfully deleted!`);
     res.redirect('/albums');
   })
@@ -442,7 +448,7 @@ app.post('/save_image',
     let resultSaved = store.addImageToAlbum(+albumId, image);
     let resultBoth = await Promise.all([resultAlbum, resultSaved]);
 
-    if ((!resultBoth[0] || !resultBoth[1])) throw new Error('Page not found.');
+    if ((!resultBoth[0] || !resultBoth[1])) throwError(ERROR_MSG.not_found, 404);
     req.flash('success', `Your image was added to "${resultBoth[0].name}"!`);
     res.redirect(`/generate`);
   })
@@ -455,7 +461,7 @@ app.post('/albums/:albumId/images/:imageId/delete',
 
     let deleted = await store.deleteImage(+albumId, +imageId);
 
-    if (!deleted) throw new Error('Page not found.');
+    if (!deleted) throwError(ERROR_MSG.not_found, 404);
     req.flash('success', `Image was successfully deleted!`);
     res.redirect(`/albums/${albumId}`);
   })
@@ -464,26 +470,28 @@ app.post('/albums/:albumId/images/:imageId/delete',
 // Error handler for those thrown from within a defined route
 app.use((err, req, res, _next) => {
   let store = res.locals.store;
+
   console.log(err);
 
+  // If postgres throws an invalid input error
   if (store.isInvalidInput(err)) {
     err.statusCode = 400;
-    err.message = 'Bad request.';
+    err.message = ERROR_MSG.bad_request;
   }
 
-  if (err.statusCode !== 404 && err.statusCode !== 400) {
+  // If an error that I have not handled is thrown
+  if ([400, 404, 500].includes(!err.statusCode)) {
+    err.message = ERROR_MSG.server_error
     err.statusCode = 500;
-    err.message = 'Internal server error.';
   }
 
   req.flash('error', err.message);
-  res.status(err.statusCode || 404);
   res.render('error', { flash: req.flash() });
 });
 
 // Serves 404's for any requests not routed
 app.use((req, res, next) => {
-  req.flash('error', 'Page not found.');
+  req.flash('error', ERROR_MSG.not_found);
   res.status(404);
   res.render('error', { flash: req.flash() });
 });
