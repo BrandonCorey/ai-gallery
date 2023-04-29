@@ -21,12 +21,20 @@ psql -d ai-gallery < ./lib/seed-data.sql
 code .env
 ```
 
-They should look like this, don't share!
+They should look like this:
+- You may have to tweak the postgres variables. These are the ones required to run for WSL2.
+- I beleive only the user's name needs to be changed
+- You can find the relevant info using \conninfo meta-command in psql terminal
 ```
 OPENAI_API_KEY=<OPENAI_API_KEY>
 SESSION_SECRET=<SESSION_SECRET>
 PORT='3000'
 HOST='localhost'
+
+POSTRGRES_USER='Insert postgres user name'
+POSTGRES_PORT=5432
+POSTGRES_DB='ai-gallery'
+POSTGRES_HOST='/var/run/postgresql'
 ```
 
 4. Start the application
