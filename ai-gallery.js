@@ -111,6 +111,7 @@ app.get('/generate',
 app.get('/albums',
   query('page')
     .optional()
+    .escape()
     .isInt({ min: 1 }),
   catchError(async (req, res) => {
 
@@ -143,7 +144,9 @@ app.get('/albums/:albumId',
   [
     query('page')
       .optional()
+      .escape()
       .isInt({ min: 1 })
+
   ],
   catchError(async (req, res) => {
     let errors = validationResult(req);
@@ -245,6 +248,7 @@ app.post('/generate',
   [
     body('imagePrompt')
       .trim()
+      .blacklist(`&<>/{}().'";`)
       .isLength({ min: 1 })
       .withMessage('A prompt is rquired to generate an image.')
       .bail()
@@ -271,7 +275,7 @@ app.post('/generate',
         error.statusCode = 400;
         throw error;
       } else {
-        let image = { imagePrompt, imageUrl };
+        let image = { imagePrompt, url: imageUrl };
 
         cacheImage(req, res, image);
         req.flash('success', 'Your image was generated successfully!');
@@ -290,6 +294,7 @@ app.post('/new_album',
   [
     body('albumName')
       .trim()
+      .blacklist(`&<>/{}().'"`)
       .isLength({ min: 1 })
       .withMessage('Album name is required.')
       .bail()
@@ -331,6 +336,7 @@ app.post('/albums/:albumId/update',
   [
     body('newName')
       .trim()
+      .blacklist(`&<>/{}().'"`)
       .isLength({ min: 1 })
       .withMessage('Album name is required.')
       .bail()
@@ -374,6 +380,7 @@ app.post('/albums/:albumId/images/:imageId/update',
   [
     body('newName')
       .trim()
+      .blacklist(`&<>/{}().'"`)
       .isLength({ min: 1 })
       .withMessage('Image caption is required.')
       .bail()
