@@ -275,7 +275,7 @@ app.post('/generate',
         error.statusCode = 400;
         throw error;
       } else {
-        let image = { imagePrompt, url: imageUrl };
+        let image = { imagePrompt, imageUrl };
 
         cacheImage(req, res, image);
         req.flash('success', 'Your image was generated successfully!');
@@ -409,7 +409,7 @@ app.post('/albums/:albumId/images/:imageId/update',
       let updated = await store.setImageCaption(+albumId, +imageId, newName);
 
       if (!updated) throw new Error('Page not found.');
-      req.flash('success', `"${newName}" updated successfully`);
+      req.flash('success', `Image name changed to "${newName}"!`);
       res.redirect(`/albums/${albumId}`);
     }
   })
@@ -435,6 +435,8 @@ app.post('/save_image',
     let store = res.locals.store;
     let { albumId } = req.body;
     let image = res.locals.tempImages[0];
+
+    console.log(image)
 
     let resultAlbum = store.loadAlbum(+albumId);
     let resultSaved = store.addImageToAlbum(+albumId, image);
