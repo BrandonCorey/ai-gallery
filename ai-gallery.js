@@ -99,7 +99,7 @@ const throwError = (message, code) => {
   let error = new Error(message);
   error.statusCode = code;
   throw error;
-}
+};
 
 // routes for GET
 app.get('/sign_in', (req, res) => {
@@ -168,7 +168,7 @@ app.get('/albums/:albumId',
     let store = res.locals.store;
     let { page } = req.query;
     let { albumId } = req.params;
-    
+
     let pageCount = await store.countImagePages(+albumId);
     if (!pageCount) throwError(ERROR_MSG.not_found, 404);
 
@@ -180,7 +180,7 @@ app.get('/albums/:albumId',
     let [ album, images ] = await Promise.all([
       store.loadAlbum(+albumId),
       store.sortedImages(+albumId, page)
-    ])
+    ]);
 
     if (!album) throwError(ERROR_MSG.not_found, 404);
 
@@ -233,13 +233,13 @@ app.post('/sign_in',
       res.render('sign-in', {
         flash: req.flash()
       });
-    
+
     } else if (!authenticatedUser.passwordMatches) {
       req.flash('error', 'Invalid password.');
       res.render('sign-in', {
         flash: req.flash(),
         username
-      })
+      });
     } else {
       req.session.username = username;
       req.session.signedIn = true;
@@ -271,7 +271,7 @@ app.post('/generate',
       .withMessage('A prompt is rquired to generate an image.')
       .bail()
       .isLength({max: 100})
-      .withMessage('Prompt must be less than 100 characters long.')
+      .withMessage('Prompt must be 100 characters or less.')
   ],
   catchError(async (req, res) => {
     let store = res.locals.store;
@@ -284,14 +284,14 @@ app.post('/generate',
         albums: await store.sortedAlbums(),
         imageUrl
       });
-    }
+    };
     if (!errors.isEmpty()) {
       errors.array().forEach(error => req.flash('error', error.msg));
-      reRenderPage()
+      reRenderPage();
     } else {
       let imageUrl = await generateImageUrl(req, res);
 
-      if (!imageUrl) throwError(ERROR_MSG.bad_request, 400)
+      if (!imageUrl) throwError(ERROR_MSG.bad_request, 400);
       else {
         let image = { imagePrompt, imageUrl };
         cacheImage(req, res, image);
@@ -313,7 +313,7 @@ app.post('/new_album',
       .withMessage('Album name is required.')
       .bail()
       .isLength({ max:100 })
-      .withMessage('Album name must be less than 100 characters.')
+      .withMessage('Album name must be 100 characters or less.')
   ],
   catchError(async (req, res) => {
     let store = res.locals.store;
@@ -353,7 +353,7 @@ app.post('/albums/:albumId/update',
       .withMessage('Album name is required.')
       .bail()
       .isLength({ max:100 })
-      .withMessage('Album name must be less than 100 characters.')
+      .withMessage('Album name must be 100 characters or less.')
   ],
   catchError(async (req, res) => {
     let store = res.locals.store;
@@ -390,7 +390,7 @@ app.post('/albums/:albumId/update',
 
 app.post('/albums/:albumId/images/:imageId/update',
   [
-    body('newName')
+    body('newCaption')
       .blacklist(`&<>/{}().'"`)
       .escape()
       .trim()
@@ -398,12 +398,12 @@ app.post('/albums/:albumId/images/:imageId/update',
       .withMessage('Image caption is required.')
       .bail()
       .isLength({ max:100 })
-      .withMessage('Image caption must be less than 100 characters.')
+      .withMessage('Image caption must be 100 characters or less.')
   ],
   catchError(async (req, res) => {
     let store = res.locals.store;
     let { albumId, imageId } = req.params;
-    let { newName } = req.body;
+    let { newCaption } = req.body;
 
     let errors = validationResult(req);
 
@@ -419,10 +419,10 @@ app.post('/albums/:albumId/images/:imageId/update',
       });
 
     } else {
-      let updated = await store.setImageCaption(+albumId, +imageId, newName);
+      let updated = await store.setImageCaption(+albumId, +imageId, newCaption);
 
       if (!updated) throwError(ERROR_MSG.not_found, 404);
-      req.flash('success', `Image name changed to "${newName}".`);
+      req.flash('success', `Image name changed to "${newCaption}".`);
       res.redirect(`/albums/${albumId}`);
     }
   })
@@ -493,7 +493,7 @@ app.use((err, req, res, _next) => {
 
   // If an error that I have not handled is thrown
   if (![400, 404, 500].includes(err.statusCode)) {
-    err.message = ERROR_MSG.server_error
+    err.message = ERROR_MSG.server_error;
     err.statusCode = 500;
   }
 

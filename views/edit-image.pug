@@ -11,11 +11,11 @@ block main
   form.forms(action=`/albums/${albumId}/images/${image.id}/update` method='post')
     dl
       dt
-        label(for='prompt') Enter your new image caption:
+        label(for='newCaption') Enter your new image caption:
       dd
         input.search(type='text'
-              id='newName'
-              name='newName'
+              id='newCaption'
+              name='newCaption'
               placeholder='e.g sleepy kangaroo')
 
     fieldset.actions
