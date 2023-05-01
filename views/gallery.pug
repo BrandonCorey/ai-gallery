@@ -15,7 +15,7 @@ block main
   each image in images
     figure
       img(src=image.url alt=image.prompt)
-    figcaption=image.prompt
+    figcaption(style='word-wrap: break-word; margin: 0 2rem;')=image.prompt
 
     fieldset.edit-image
       form(action=`/albums/${album.id}/images/${image.id}/edit` method='get')
