@@ -1,5 +1,6 @@
 'use strict';
 
+// Npm packages
 const express = require('express');
 const morgan = require('morgan');
 const session = require('express-session');
@@ -9,10 +10,12 @@ const { Configuration, OpenAIApi } = require('openai');
 const store = require('connect-loki');
 const { body, query, validationResult } = require('express-validator');
 
+// Local modules
 const catchError = require('./lib/catch-error');
 const PgPersistence = require('./lib/pg-persistence');
 const ERROR_MSG = require('./errors.json');
 
+// config
 const app = express();
 const HOST = process.env.HOST;
 const PORT = process.env.PORT;
@@ -25,6 +28,7 @@ const openai = new OpenAIApi(configuration);
 app.set('views', './views');
 app.set('view engine', 'pug');
 
+// applicaton-level middleware
 app.use(morgan('common'));
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: false }));
@@ -54,12 +58,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// Store originalUrl and redirect user to sign in if not already
+// Store originalUrl, then redirect user to sign in if not already
 app.use((req, res, next) => {
   let signedIn = req.session.signedIn;
   if (!signedIn && req.originalUrl !== '/sign_in') {
     if (req.originalUrl !== '/')  {
-      req.flash('error', 'You must sign in to access a page.');
+      req.flash('error', 'You must sign in to access the page.');
     }
     req.session.originalUrl = req.originalUrl;
     res.redirect('/sign_in');
@@ -97,6 +101,7 @@ const throwError = (message, code) => {
   throw error;
 }
 
+// routes for GET
 app.get('/sign_in', (req, res) => {
   res.render('sign-in');
 });
@@ -163,8 +168,6 @@ app.get('/albums/:albumId',
     let store = res.locals.store;
     let { page } = req.query;
     let { albumId } = req.params;
-
-    if (Number.isNaN(+albumId)) throwError(ERROR_MSG.bad_request, 400);
     
     let pageCount = await store.countImagePages(+albumId);
     if (!pageCount) throwError(ERROR_MSG.not_found, 404);
@@ -174,15 +177,16 @@ app.get('/albums/:albumId',
 
     if (page > pageCount) throwError(ERROR_MSG.not_found, 404);
 
-    let resultAlbum = store.loadAlbum(+albumId);
-    let resultImages = store.sortedImages(+albumId, page);
-    let resultBoth = await Promise.all([resultAlbum, resultImages]);
+    let [ album, images ] = await Promise.all([
+      store.loadAlbum(+albumId),
+      store.sortedImages(+albumId, page)
+    ])
 
-    if (!resultBoth[0]) throwError(ERROR_MSG.not_found, 404);
+    if (!album) throwError(ERROR_MSG.not_found, 404);
 
     res.render('gallery', {
-      album: resultBoth[0],
-      images: resultBoth[1],
+      album,
+      images,
       page,
       pageCount
     });
@@ -206,32 +210,36 @@ app.get('/albums/:albumId/images/:imageId/edit',
     let store = res.locals.store;
     let { albumId, imageId } = req.params;
 
-    let resultAlbum = store.loadAlbum(+albumId);
-    let resultImages = store.loadImage(+albumId, +imageId);
+    let image = await store.loadImage(+albumId, +imageId);
 
-    let resultBoth = await Promise.all([resultAlbum, resultImages]);
-
-    if (!resultBoth[0] || !resultBoth[1]) throwError(ERROR_MSG.not_found, 404);
+    if (!image) throwError(ERROR_MSG.not_found, 404);
 
     res.render('edit-image', {
       albumId,
-      image: resultBoth[1],
+      image,
     });
   })
 );
 
+// routes for POST
 app.post('/sign_in',
   async (req, res) => {
     let store = res.locals.store;
     let { username, password } = req.body;
-    let authenticated = await store.authenticateUser(username, password);
+    let authenticatedUser = await store.authenticateUser(username, password);
 
-    if (!authenticated) {
-      req.flash('error', 'Invalid Credentials.');
+    if (!authenticatedUser.exists) {
+      req.flash('error', 'Invalid username.');
+      res.render('sign-in', {
+        flash: req.flash()
+      });
+    
+    } else if (!authenticatedUser.passwordMatches) {
+      req.flash('error', 'Invalid password.');
       res.render('sign-in', {
         flash: req.flash(),
         username
-      });
+      })
     } else {
       req.session.username = username;
       req.session.signedIn = true;
@@ -257,6 +265,7 @@ app.post('/generate',
   [
     body('imagePrompt')
       .blacklist(`&<>/{}().'";`)
+      .escape()
       .trim()
       .isLength({ min: 1 })
       .withMessage('A prompt is rquired to generate an image.')
@@ -269,28 +278,26 @@ app.post('/generate',
     let { imagePrompt }  = req.body;
     let errors = validationResult(req);
 
-    if (!errors.isEmpty()) {
-      errors.array().forEach(error => req.flash('error', error.msg));
+    const reRenderPage = async (imageUrl = null) => {
       res.render('generate-image', {
         flash: req.flash(),
         albums: await store.sortedAlbums(),
-        imagePrompt
+        imageUrl
       });
+    }
+    if (!errors.isEmpty()) {
+      errors.array().forEach(error => req.flash('error', error.msg));
+      reRenderPage()
     } else {
       let imageUrl = await generateImageUrl(req, res);
 
       if (!imageUrl) throwError(ERROR_MSG.bad_request, 400)
       else {
         let image = { imagePrompt, imageUrl };
-
         cacheImage(req, res, image);
-        req.flash('success', 'Your image was generated successfully!');
 
-        res.render('generate-image', {
-          imageUrl,
-          flash: req.flash(),
-          albums: await store.sortedAlbums(),
-        });
+        req.flash('success', 'Your image was generated successfully!');
+        reRenderPage(imageUrl);
       }
     }
   })
@@ -300,6 +307,7 @@ app.post('/new_album',
   [
     body('albumName')
       .blacklist(`&<>/{}().'"`)
+      .escape()
       .trim()
       .isLength({ min: 1 })
       .withMessage('Album name is required.')
@@ -313,10 +321,7 @@ app.post('/new_album',
 
     let errors = validationResult(req);
     const reRenderPage = () => {
-      res.render('new-album', {
-        flash: req.flash(),
-        albumName,
-      });
+      res.render('new-album', { flash: req.flash() });
     };
 
     if (!errors.isEmpty()) {
@@ -331,7 +336,7 @@ app.post('/new_album',
         req.flash('error', 'Album name must be unique.');
         reRenderPage();
       } else {
-        req.flash('success', `"${albumName}" was succesfully created!`);
+        req.flash('success', `Album "${albumName}" was successfully created!`);
         res.redirect('/albums');
       }
     }
@@ -342,6 +347,7 @@ app.post('/albums/:albumId/update',
   [
     body('newName')
       .blacklist(`&<>/{}().'"`)
+      .escape()
       .trim()
       .isLength({ min: 1 })
       .withMessage('Album name is required.')
@@ -359,7 +365,6 @@ app.post('/albums/:albumId/update',
     const reRenderPage = () =>  {
       res.render('edit-album', {
         flash: req.flash(),
-        newName,
         albumId
       });
     };
@@ -376,8 +381,8 @@ app.post('/albums/:albumId/update',
         req.flash('error', 'Album name must be unique.');
         reRenderPage();
       } else {
-        req.flash('success', `"${newName}" was succesfully updated!`);
-        res.redirect('/albums');
+        req.flash('success', `Album name changed to "${newName}".`);
+        res.redirect(`/albums/${albumId}`);
       }
     }
   })
@@ -387,6 +392,7 @@ app.post('/albums/:albumId/images/:imageId/update',
   [
     body('newName')
       .blacklist(`&<>/{}().'"`)
+      .escape()
       .trim()
       .isLength({ min: 1 })
       .withMessage('Image caption is required.')
@@ -409,15 +415,14 @@ app.post('/albums/:albumId/images/:imageId/update',
       res.render('edit-image', {
         albumId,
         image,
-        flash: req.flash(),
-        newName,
+        flash: req.flash()
       });
 
     } else {
       let updated = await store.setImageCaption(+albumId, +imageId, newName);
 
       if (!updated) throwError(ERROR_MSG.not_found, 404);
-      req.flash('success', `Image name changed to "${newName}"!`);
+      req.flash('success', `Image name changed to "${newName}".`);
       res.redirect(`/albums/${albumId}`);
     }
   })
@@ -428,12 +433,13 @@ app.post('/albums/:albumId/delete',
     let store = res.locals.store;
     let { albumId } = req.params;
 
-    let resultAlbum = store.loadAlbum(+albumId);
-    let resultDeleted = store.deleteAlbum(+albumId);
-    let resultBoth = await Promise.all([resultAlbum, resultDeleted]);
+    let [ album, deleted ] = await Promise.all([
+      store.loadAlbum(+albumId),
+      store.deleteAlbum(+albumId)
+    ]);
 
-    if (!resultBoth[0] || !resultBoth[1]) throwError(ERROR_MSG.not_found, 404);
-    req.flash('success', `"${resultBoth[0].name}" was successfully deleted!`);
+    if (!deleted) throwError(ERROR_MSG.not_found, 404);
+    req.flash('success', `Album "${album.name}" was successfully deleted!`);
     res.redirect('/albums');
   })
 );
@@ -444,14 +450,13 @@ app.post('/save_image',
     let { albumId } = req.body;
     let image = res.locals.tempImages[0];
 
-    console.log(image)
+    let [ album, saved ] = await Promise.all([
+      store.loadAlbum(+albumId),
+      store.addImageToAlbum(+albumId, image)
+    ]);
 
-    let resultAlbum = store.loadAlbum(+albumId);
-    let resultSaved = store.addImageToAlbum(+albumId, image);
-    let resultBoth = await Promise.all([resultAlbum, resultSaved]);
-
-    if ((!resultBoth[0] || !resultBoth[1])) throwError(ERROR_MSG.not_found, 404);
-    req.flash('success', `Your image was added to "${resultBoth[0].name}"!`);
+    if (!saved) throwError(ERROR_MSG.not_found, 404);
+    req.flash('success', `Your image was added to "${album.name}".`);
     res.redirect(`/generate`);
   })
 );
@@ -461,10 +466,15 @@ app.post('/albums/:albumId/images/:imageId/delete',
     let store = res.locals.store;
     let { albumId, imageId } = req.params;
 
-    let deleted = await store.deleteImage(+albumId, +imageId);
+    let [ image, deleted ] = await Promise.all([
+      store.loadImage(albumId, +imageId),
+      store.deleteImage(+albumId, +imageId)
+    ]);
+
+    console.log(image);
 
     if (!deleted) throwError(ERROR_MSG.not_found, 404);
-    req.flash('success', `Image was successfully deleted!`);
+    req.flash('success', `"${image.prompt}" was successfully deleted!`);
     res.redirect(`/albums/${albumId}`);
   })
 );
@@ -482,7 +492,7 @@ app.use((err, req, res, _next) => {
   }
 
   // If an error that I have not handled is thrown
-  if ([400, 404, 500].includes(!err.statusCode)) {
+  if (![400, 404, 500].includes(err.statusCode)) {
     err.message = ERROR_MSG.server_error
     err.statusCode = 500;
   }
