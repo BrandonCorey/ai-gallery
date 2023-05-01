@@ -439,7 +439,7 @@ app.post('/albums/:albumId/delete',
     ]);
 
     if (!deleted) throwError(ERROR_MSG.not_found, 404);
-    req.flash('success', `Album "${album.name}" was successfully deleted!`);
+    req.flash('success', `Album "${album.name}" was successfully.`);
     res.redirect('/albums');
   })
 );

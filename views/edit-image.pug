@@ -5,10 +5,13 @@ block main
     dl.album-list
       dt#album-edit.album-list-items
         a(href=`/albums/${albumId}`) ↩ Back to album
+
+
+  h2 Update your caption.
   form.forms(action=`/albums/${albumId}/images/${image.id}/update` method='post')
     dl
       dt
-        label(for='prompt') Update the caption of your image:
+        label(for='prompt') Enter your new image caption:
       dd
         input.search(type='text'
               id='newName'
@@ -20,7 +23,7 @@ block main
 
 
   section.album-list-container
-    dl.album-list
+    dl.gallery-list
       figure
         img(src=image.url alt=image.prompt)
       figcaption(style='margin-bottom: 4rem;')=image.prompt

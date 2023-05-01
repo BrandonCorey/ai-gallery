@@ -9,11 +9,12 @@ block main
         form(action=`/albums/${albumId}/delete` method='post')
           button.delete 🗑️ Delete Album
 
+  h2 Update your album.
 
   form.forms(action=`/albums/${albumId}/update` method='post')
     dl
       dt
-        label(for='newName') Update the name of your album:
+        label(for='newName') Enter your new album name:
       dd
         input.search(type='text'
               id='newName'

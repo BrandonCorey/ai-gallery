@@ -96,6 +96,7 @@ dl {
   width: 20%;
   min-width: 8rem;
   text-align: center;
+  transition: ease
   white-space: nowrap;
   vertical-align: middle;
 }
@@ -131,11 +132,13 @@ dl {
   background-color: #51b993;
   color: white;
   cursor: pointer;
+  transition: background-color 0.25s ease-out;
 }
 
 .new:hover, .new:focus{
   background-color: rgb(129, 129, 129);
   color:white;
+  transition: background-color 0.25s ease-out;
 }
 #robot-icon {
   display: inline-block;
@@ -235,6 +238,7 @@ main img {
 
 .album-list-container {
   width: 50%;
+  margin-bottom: 3rem;
 }
 
 @media (width < 850px) {
@@ -250,9 +254,14 @@ main img {
   width: 100%;
 }
 
+.gallery-list {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
 .album-list a {
   color: rgb(88, 88, 88);
-  flex-wrap: wrap;
 }
 
 .album-list div {

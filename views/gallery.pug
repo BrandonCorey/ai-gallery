@@ -1,7 +1,6 @@
 extends layout
 
 block main
-  h2.album-title "#{album.name}"
   section.album-list-container
     dl.album-list
       dt#album-edit.album-list-items
@@ -10,6 +9,9 @@ block main
       if images.length === 0
         p This album doesn't have any images... 
           a(href='/generate') <b>create one!<b>
+
+  if images.length !== 0
+    h2.album-title "#{album.name}"
   each image in images
     figure
       img(src=image.url alt=image.prompt)

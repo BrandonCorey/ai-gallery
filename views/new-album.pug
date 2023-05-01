@@ -1,8 +1,12 @@
 extends layout
 
 block main
-  h2 Create a new photo album.
+  section.album-list-container
+    dl.album-list
+      dt#album-edit.album-list-items
+        a(href='/albums') ↩ Back to albums
 
+  h2 Create a new photo album.
   form.forms(action='/new_album' method='post')
     dl
       dt

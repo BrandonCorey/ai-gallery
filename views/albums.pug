@@ -5,7 +5,7 @@ block main
   section.album-list-container
     dl.album-list
       dt#album-edit.album-list-items(style='justify-content: end;')
-        a(href='/new_album') ⊕ New Album
+        a(href='/new_album') + New Album
       if albums.length === 0
         p Hmmm... you don't have any albums yet!
         
