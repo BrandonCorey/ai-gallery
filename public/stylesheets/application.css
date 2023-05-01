@@ -40,7 +40,7 @@ main .forms {
   margin: 3rem auto;
   padding: 1.5rem;
   max-width: 75%;
-  min-width: 500px;
+  min-width: 400px;
 }
 
 form input {
@@ -67,6 +67,7 @@ dl {
   line-height: 2.5rem;
   text-align: left;
   width: 50%;
+  min-width: 300px;
 }
 
 .search {
@@ -81,6 +82,7 @@ dl {
   border: 0;
   width: 50%;
   margin: 0 auto;
+  min-width: 300px;
 }
 
 .buttons {
@@ -96,7 +98,6 @@ dl {
   width: 20%;
   min-width: 8rem;
   text-align: center;
-  transition: ease
   white-space: nowrap;
   vertical-align: middle;
 }
@@ -155,6 +156,14 @@ main img {
   margin: 3rem auto;
 }
 
+
+@media (width < 750px) {
+  main img {
+    width: 70%;
+  }
+}
+
+
 #sidebar-container {
   box-sizing: border-box;
   position: fixed;
@@ -171,7 +180,6 @@ main img {
 
 #sidebar-container ul {
   flex-grow: 1;
-
 }
 
 #sidebar-container li {
@@ -233,17 +241,19 @@ main img {
 
 .album-title {
   font-size: 4rem;
-  margin-bottom: 1rem;
+  margin: 0 2rem 0;
+  word-wrap: break-word;
 }
 
 .album-list-container {
-  width: 50%;
+  width: 1000px;
   margin-bottom: 3rem;
 }
 
-@media (width < 850px) {
+
+@media (width < 1100px) {
   .album-list-container {
-    width: 65%;
+    width: 80%;
   }
 }
 
@@ -258,6 +268,8 @@ main img {
   display: flex;
   flex-direction: column;
   width: 100%;
+  flex-wrap: wrap;
+  overflow: hidden;
 }
 
 .album-list a {
@@ -275,6 +287,8 @@ main img {
   display: flex;
   list-style: none;
   padding: 1rem;
+  flex-wrap: wrap;
+  overflow: hidden;
 }
 
 .empty {
@@ -336,6 +350,7 @@ main img {
   text-align: center;
   border-radius: 0.25rem;
   box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+  word-wrap: break-word;
 }
 
 .flash p {
@@ -351,29 +366,6 @@ main img {
 .flash.error {
   background-color: #ffcfbf;
   color: #cc4e00;
-}
-
-
-/* Custom scroll bar*/
-/* width */
-::-webkit-scrollbar {
-  width: 0.6rem;
-}
-
-/* Track */
-::-webkit-scrollbar-track {
-  background-color: transparent;
-}
- 
-/* Handle */
-::-webkit-scrollbar-thumb {
-  background-color: #888;
-
-}
-
-/* Handle on hover */
-::-webkit-scrollbar-thumb:hover {
-  background-color:rgb(99, 99, 99);
 }
 
 section {

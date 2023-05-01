@@ -31,7 +31,7 @@ SESSION_SECRET=<SESSION_SECRET>
 PORT='3000'
 HOST='localhost'
 
-POSTRGRES_USER='Insert postgres user name'
+POSTRGRES_USER='<Insert postgres user name>'
 POSTGRES_PORT=5432
 POSTGRES_DB='ai-gallery'
 POSTGRES_HOST='/var/run/postgresql'

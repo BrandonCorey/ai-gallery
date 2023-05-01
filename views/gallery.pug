@@ -7,10 +7,10 @@ block main
         a(href='/albums') ↩ Back to albums
         a(href=`/albums/${album.id}/edit`) ✎ Edit Album
       if images.length === 0
-        p This album doesn't have any images... 
+        p "#{album.name}" doesn't have any images... 
           a(href='/generate') <b>create one!<b>
 
-  if images.length !== 0
+  if images.length > 0
     h2.album-title "#{album.name}"
   each image in images
     figure
