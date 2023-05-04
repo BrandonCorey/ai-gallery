@@ -1,6 +1,6 @@
 'use strict';
 
-// Npm packages
+// Node packages
 const express = require('express');
 const morgan = require('morgan');
 const session = require('express-session');
@@ -48,13 +48,12 @@ app.use(session({
 
 app.use(flash());
 
-// Delete any session data not needed after redirect
+// Pass session data to res.locals after redirect
 app.use((req, res, next) => {
   res.locals.tempImages = req.session.tempImages;
   res.locals.flash = req.session.flash;
   res.locals.signedIn = req.session.signedIn;
   delete req.session.flash;
-  delete req.session.tempImages;
   next();
 });
 
@@ -115,7 +114,7 @@ app.get('/generate',
     let store = res.locals.store;
 
     res.render('generate-image', {
-      albums: await store.sortedAlbums()
+      albums: await store.loadAllAlbums()
     });
   })
 );
@@ -137,6 +136,8 @@ app.get('/albums',
 
     page = Number(page) || 1;
     if (page > pageCount) throwError(ERROR_MSG.not_found, 404);
+
+    console.log(page)
 
     let albums = await store.sortedAlbums(page);
 
@@ -274,6 +275,8 @@ app.post('/generate',
       .withMessage('Prompt must be 100 characters or less.')
   ],
   catchError(async (req, res) => {
+    delete req.session.tempImages;
+
     let store = res.locals.store;
     let { imagePrompt }  = req.body;
     let errors = validationResult(req);
@@ -281,7 +284,7 @@ app.post('/generate',
     const reRenderPage = async (imageUrl = null) => {
       res.render('generate-image', {
         flash: req.flash(),
-        albums: await store.sortedAlbums(),
+        albums: await store.loadAllAlbums(),
         imageUrl
       });
     };
@@ -450,14 +453,29 @@ app.post('/save_image',
     let { albumId } = req.body;
     let image = res.locals.tempImages[0];
 
-    let [ album, saved ] = await Promise.all([
-      store.loadAlbum(+albumId),
-      store.addImageToAlbum(+albumId, image)
-    ]);
+    let albums = await store.loadAllAlbums();
 
-    if (!saved) throwError(ERROR_MSG.not_found, 404);
-    req.flash('success', `Your image was added to "${album.name}".`);
-    res.redirect(`/generate`);
+    if (!albumId) {
+      req.flash('error', 'You must select an album to save to.')
+      res.render('generate-image', {
+        flash: req.flash(),
+        albums,
+        imageUrl: image.imageUrl
+      });
+    } else {
+      let [ album, saved ] = await Promise.all([
+        store.loadAlbum(+albumId),
+        store.addImageToAlbum(+albumId, image),
+      ]);
+  
+      if (!saved) throwError(ERROR_MSG.not_found, 404);
+  
+      req.flash('success', `Your image was added to "${album.name}".`);
+      res.render('generate-image', {
+        flash: req.flash(),
+        albums,
+      });
+    }
   })
 );
 
@@ -470,8 +488,6 @@ app.post('/albums/:albumId/images/:imageId/delete',
       store.loadImage(albumId, +imageId),
       store.deleteImage(+albumId, +imageId)
     ]);
-
-    console.log(image);
 
     if (!deleted) throwError(ERROR_MSG.not_found, 404);
     req.flash('success', `"${image.prompt}" was successfully deleted!`);
