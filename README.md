@@ -1,3 +1,17 @@
+# This app lets you:
+- Create users
+- Create albums
+  - Edit albums
+  - Delete albums
+- Create AI generate images
+  - Save images to albums
+  - Edit generated images
+  - Delete images
+ 
+![ai-gallery-preview](https://github.com/BrandonCorey/ai-gallery/assets/93304067/738d783b-5f09-4242-bf90-c87207696b49)
+
+![ai-gallery-preview-2](https://github.com/BrandonCorey/ai-gallery/assets/93304067/ca8d1840-43bc-44ca-93d6-1330eaeb741c)
+
 ## Specifications
 - v16.16.0
 - Browsers tested: Chrome and Edge
