@@ -57,16 +57,3 @@ password: password
 username: guest
 password: login
 ```
-
-## Additional information
-If you are signed in on a user that does not have any albums, a warning will be displayed stating that images can only be saved if an album is created
-- On the same note, the buttons that allow you to save an image will be disabled if no albums are present
-
-- Albums are sorted by number of images in them (descendering)
-- Images are sorted by creaetion date (recent --> old)
-
-The relevant views, as well as the ability to sign out, are contained in the nav bar in the top left, which can be toggled on click
-
-I became aware that submitting the form to generate the image asynchornously is preferable in this context, but that fell into the *too complicated* category, so I left it alone.
-
-Also, my CSS is horrific. It improved as I went on and learned more, but its all over the place.
