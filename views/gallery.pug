@@ -14,7 +14,7 @@ block main
     h2.album-title "#{album.name}"
   each image in images
     figure
-      img(src=image.url alt=image.prompt)
+      img(width=512 src=image.url alt=image.prompt)
     figcaption(style='word-wrap: break-word; margin: 0 2rem;')=image.prompt
 
     fieldset.edit-image
