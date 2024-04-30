@@ -6,7 +6,7 @@ const express = require("express");
 const morgan = require("morgan");
 const session = require("express-session");
 const flash = require("express-flash");
-const { Configuration, OpenAIApi } = require("openai");
+const OpenAI = require("openai");
 const store = require("connect-loki");
 const { body, query, validationResult } = require("express-validator");
 
@@ -20,10 +20,7 @@ const app = express();
 const HOST = process.env.HOST;
 const PORT = process.env.PORT;
 const LokiStore = store(session);
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-const openai = new OpenAIApi(configuration);
+const openai = new OpenAI();
 
 app.set("views", "./views");
 app.set("view engine", "pug");
@@ -87,13 +84,14 @@ const cacheImage = (req, _res, image) => {
 // Use openAI image creation API to generate image
 const generateImageUrl = async (req, _res) => {
   let { imagePrompt } = req.body;
-  const response = await openai.createImage({
+  const response = await openai.images.generate({
+    model: "dall-e-3",
     prompt: imagePrompt,
     n: 1,
-    size: "512x512",
+    size: "1024x1024",
   });
 
-  return response.data.data[0].url;
+  return response.data[0].url;
 };
 
 const throwError = (message, code) => {
